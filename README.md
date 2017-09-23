@@ -1,2 +1,2 @@
 # groceryService
-Grocery RESTFul API using node
+Grocery RESTFul API, CRUD function
