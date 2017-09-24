@@ -1,0 +1,14 @@
+version: "2"
+services:
+  web:
+    build: .
+    volumes:
+      - ./:/app
+    ports:
+      - "4002:4000"
+    links:
+      - mongo
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
