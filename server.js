@@ -20,54 +20,94 @@ var router = express.Router();              // get an instance of the express Ro
 
 
 //middleware to use for all requests
-router.use(function(req, res, next){
+router.use(function (req, res, next) {
     console.log("Request is comming...");
     next();
 })
 
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
-router.get('/', function(req, res) {
-    res.json({ message: 'hooray! welcome to our api!' });   
+router.get('/', function (req, res) {
+    res.json({ message: 'hooray! welcome to our api!' });
 });
 
+function itemValidation(item) {
+    var validationMessage = null;
+    if (!item.name) {
+        validationMessage = "Item name cannot be empty";
+    }
+    if (item.price && item.price.length>0) {
+        if (isNaN(item.price)) {
+            validationMessage = "Not a valid price.";
+        }
+        if (!isNaN(item.price) && item.price <= 0) {
+            validationMessage = "Price cannot be negative";
+        }
+    }
+    return validationMessage;
+}
 
 router.route('/items')
-    .post(function(req, res){
+    .post(function (req, res) {
 
-        if(req.body.name){
+        var validationResult = itemValidation(req.body);
+        if (!validationResult) {
             var item = new Item({
-                name: req.body.name
+                name: req.body.name,
+                price: req.body.price
             });
-    
-            item.save(function(err){
-                if(err)
+
+            item.save(function (err) {
+                if (err)
                     res.send(err);
                 res.json(req.body);
             });
         }
-        else{
-            res.json({message: "please provide a valid name"});
+        else {
+            res.json({ message: validationResult });
         }
 
-        
+
     })
 
-    .get(function(req, res){
-        Item.find(function(err, items){
+    .get(function (req, res) {
+        Item.find(function (err, items) {
             if (err)
                 res.send(err);
             res.json(items);
         })
     });
 
-router.route('/items/:item_name')
-    .get(function(req, res){
-        Item.find({name: req.params.item_name}, function(err, items){
-            if(err)
+router.route('/items/:item_attr')
+    .get(function (req, res) {
+        Item.find({ name: req.params.item_attr }, function (err, items) {
+            if (err)
                 res.send(err);
             res.json(items);
         });
+    })
+    .put(function (req, res) {
+        var validationResult = itemValidation(req.body);
+        if (!validationResult) {
+            Item.findByIdAndUpdate(req.params.item_attr, { $set: req.body }, function (err, result) {
+                if (err) {
+                    res.send(err);
+                }
+                res.send({ message: 'Successfully updated' });
+
+            });
+        }
+        else {
+            res.json({ message: validationResult });
+        }
+    })
+    .delete(function (req, res) {
+        Item.findByIdAndRemove(req.params.item_attr, function (err, result) {
+            if (err) {
+                res.send(err);
+            }
+            res.send({ message: 'Item removed' });
+        })
     });
 
 // more routes for our API will happen here
